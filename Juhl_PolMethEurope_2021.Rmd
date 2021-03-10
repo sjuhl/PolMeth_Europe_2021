@@ -315,6 +315,8 @@ for(w in unique(input$W_id)){
            ,y.intersp=1.1)
   }
   
+  axis(1,at=unique(input$p),labels=c("0","0.25","0.5","0.75"),mgp=c(3,.5,0))
+  
   if(w==max(input$W_id)) axis(4,at=c(0,5,10,15,20,25,30,35),las=1,mgp=c(3,.7,0))
   if(w==1) mtext(expression(bold(W)["50"]),side=3,line=.5)
   if(w==2) mtext(expression(bold(W)["200"]),side=3,line=.5)

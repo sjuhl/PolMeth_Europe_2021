@@ -1,0 +1,327 @@
+---
+title: "Eigenvector-Based Semiparametric Filtering of Spatial Autocorrelation in Regression Models"
+date: "March 17, 2021"
+output:
+  beamer_presentation:
+    includes:
+      in_header:
+        - pres_template/pres_template.sty
+        - pres_template/pkg.tex
+        - title.tex
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = FALSE)
+```
+
+## Motivation
+
+
+* spatial autocorrelation can lead to inefficient or even biased and inconsistent parameter estimates in regression models
+* social scientists primarily address this issue in one of two ways:
+  1. ignore it altogether and assume \textit{iid} observations
+  2. apply (parametric) spatial regression models
+
+\vspace{.3cm}
+
+* semiparametric filtering techniques can offer an attractive alternative
+  * ease of estimation (standard OLS or ML estimators)
+  * straightforward interpretation
+  * accounts for spatial autocorrelation at different scales/resolutions
+  * easily adaptable to GLMs
+
+
+## Spatial Misspecification in Linear Models
+
+\vspace{-.4cm}
+
+\[
+\bm{y} = \bm{X\beta} + \bm{e}
+\]
+
+\pause
+\vspace{-.2cm}
+
+\begin{minipage}[t]{.3\textwidth}
+\centering
+\underline{Spatial Error Model}
+\footnotesize
+\[
+\bm{y} = \bm{X\beta} + \underbrace{(\bm{I}-\rho\bm{W})^{-1}\bm{\epsilon}}_{\bm{e}_{SEM}}
+\]
+\end{minipage}
+\begin{minipage}[t]{.3\textwidth}
+\centering
+\underline{Spatial-X Model}
+\footnotesize
+\[
+\bm{y} = \bm{X\beta} + \underbrace{\rho\bm{WX}+\bm{\epsilon}}_{\bm{e}_{SLX}}
+\]
+\end{minipage}
+\begin{minipage}[t]{.38\textwidth}
+\centering
+\underline{Spatial Lag Model}
+\footnotesize
+\begin{align}
+\nonumber\bm{y} & = \bm{X\beta} + \underbrace{\rho\bm{Wy}+\bm{\epsilon}}_{\bm{e}_{SAR}}\\
+\nonumber\bm{y} & = (\bm{I}-\rho\bm{W})^{-1} (\bm{X\beta} + \bm{\epsilon})
+\end{align}
+\end{minipage}
+
+\pause
+<!-- \vspace{-.5cm} -->
+\footnotesize
+\[
+(\bm{I}-\rho\bm{W})^{-1} = (\bm{I} + \rho\bm{W}+\rho^2\bm{W}+...)
+\]
+
+
+\vspace{-.7cm}
+
+\begin{minipage}[t]{.3\textwidth}
+\footnotesize
+\[\begin{array}{rl}
+\bm{y} = & \bm{X\beta}\\
+&\left.\begin{array}{l} + \rho\bm{W}\bm{\epsilon}\\
++ \rho^2\bm{W}^2\bm{\epsilon}\\
++ ... + \bm{\epsilon}\end{array}\right\}\bm{\epsilon}_{SEM}
+\end{array}
+\]
+\end{minipage}
+\begin{minipage}[t]{.3\textwidth}
+\footnotesize
+\
+\end{minipage}
+\begin{minipage}[t]{.38\textwidth}
+\footnotesize
+\[\begin{array}{rl}
+\bm{y} = & \bm{X\beta}\\
+&\left.\begin{array}{l} + \rho\bm{W}(\bm{X\beta}+\bm{\epsilon})\\
++ \rho^2\bm{W}^2(\bm{X\beta}+\bm{\epsilon})\\
++ ... + \bm{\epsilon}\end{array}\right\}\bm{\epsilon}_{SAR}
+\end{array}
+\]
+\end{minipage}
+
+\pause
+<!-- \vspace{.2cm} -->
+
+\begin{minipage}[t]{.325\textwidth}
+\centering
+\footnotesize
+\underline{$\bm{e}_{SEM}$}
+\vspace{-.3cm}
+\[
+\underbrace{\sum_{r=1}^{\infty}\rho^r\bm{W}^r\bm{\epsilon}}_{\text{spatial part}} + \underbrace{\vphantom{\sum_{i}^{i}}\bm{\epsilon}}_{\text{noise}}
+\]
+\end{minipage}
+\begin{minipage}[t]{.325\textwidth}
+\centering
+\footnotesize
+\underline{$\bm{e}_{SLX}$}
+\vspace{-.3cm}
+\[
+\underbrace{\vphantom{\sum_{r=1}^{\infty}}\rho\bm{WX}}_{\text{spatial part}} +\underbrace{\vphantom{\sum_{r=1}^{\infty}}\bm{\epsilon}}_{\text{noise}}
+\]
+\end{minipage}
+\begin{minipage}[t]{.325\textwidth}
+\centering
+\footnotesize
+\underline{$\bm{e}_{SAR}$}
+\vspace{-.3cm}
+\[
+\underbrace{\sum_{r=1}^{\infty}\rho^r\bm{W}^r(\bm{X\beta} + \bm{\epsilon})}_{\text{spatial part}} + \underbrace{\vphantom{\sum_{i}^{i}}\bm{\epsilon}}_{\text{noise}}
+\]
+\end{minipage}
+
+
+## Eigenvector-Based Spatial Filtering
+
+\underline{Intuition:}
+
+ESF partitions the response variable into i) a systematic trend, ii) a stochastic spatial signal, and iii) \textit{iid} disturbances
+
+\vspace{.7cm}
+
+\underline{Example: SAR DGP}
+
+\begin{center}
+\begin{tikzpicture}[sibling distance=10em]
+\node{\begin{tabular}{c}$\bm{y}$\\{\tiny(outcome)}\end{tabular}}
+	child[->]{node{\begin{tabular}{c}$\bm{X\beta}$\\{\tiny(systematic trend)}\end{tabular}}}
+	child[->]{node{\begin{tabular}{c}$\sum_{r=1}^{\infty}\rho^r\bm{W}^r(\bm{X\beta} + \bm{\epsilon})+\epsilon$\\{\tiny(autocorrelated part)}\end{tabular}}
+		child[->]{node{\begin{tabular}{c}$\sum_{r=1}^{\infty}\rho^r\bm{W}^r(\bm{X\beta} + \bm{\epsilon})$\\{\tiny(stochastic spatial signal)}\end{tabular}}}
+		child[->]{node{\begin{tabular}{c}$\epsilon$\\{\tiny(\textit{iid} disturbances)}\end{tabular}}}};
+\end{tikzpicture}
+\end{center}
+
+
+## Analytical Description of ESF I
+
+ESF technique utilizes the spectral decomposition of a centered and symmetrized connectivity matrix: $\bm{V}=\frac{1}{2}(\bm{W}+\bm{W}')$:
+\[
+\bm{MVM} = \bm{E\Lambda E}^{-1} = \bm{E\Lambda E}'
+\]
+
+* demeaning projector $\bm{M}=(\bm{I}-\bm{11}'/n)$ ensures that all eigenvectors are orthogonal und uncorrelated
+* asymptotically, the eigenfunctions obtained from $\bm{MVM}$ converge to those of matrix $\bm{V}$
+* $\bm{E}$ are all $n$ eigenvectors
+* $\bm{\Lambda}$ is a diagonal matrix of the corresponding eigenvalues $\bm{\lambda}$
+
+\begin{align}
+\nonumber & \bm{y} = \bm{X\beta} + \underbrace{\rho\bm{Wy}+\bm{\epsilon}}_{\bm{e}_{SAR}}\\
+\nonumber\Rightarrow \hspace{.2cm} & \bm{y} = \bm{X\beta} + \underbrace{\rho\bm{E\Lambda E}'\bm{y}+\bm{\epsilon}}_{\bm{e}_{SAR}}
+\end{align}
+
+
+## Analytical Description of ESF II
+\[
+\bm{y} = \bm{X\beta} + \rho\bm{E\Lambda}\underbrace{\bm{E}'\bm{y}}_{\bm{g}}+\bm{\epsilon}
+\]
+
+
+* $\bm{g}$ is the OLS estimator of $\bm{y}$ regressed on $\bm{E}$
+
+  $(\bm{E'E})^{-1}\bm{Ey} \Rightarrow \bm{Ey}$ since $\bm{E'E}=\bm{I}$
+
+\pause
+\vspace{-.3cm}
+
+\[
+\bm{y} = \bm{X\beta} + \rho\bm{E\Lambda g}+\bm{\epsilon}
+\]
+
+* $\rho\bm{E\Lambda}$: $\rho\bm{\Lambda}$ essentially rescales $\bm{E}$
+
+  $\Rightarrow \bm{\gamma}=\rho\bm{\Lambda g}$
+
+\pause
+\vspace{-.5cm}
+
+\begin{align}
+\nonumber \bm{y} &= \bm{X\beta} + \rho\bm{E\Lambda E}'\bm{y}+\bm{\epsilon}\\
+\nonumber &= \bm{X\beta} + \bm{E}\bm{\gamma} + \vphantom{\gamma}\bm{\epsilon}
+\end{align}
+
+However, we cannot include all $n$ eigenvectors as regressors!
+
+
+## Constructing the Spatial Filter
+
+* the set of $\bm{E}$ depict \underline{all} possible patterns of autocorrelation permitted by the connectivity matrix $\bm{W}$
+* stepwise regression techniques help to select the most relevant patterns $\bm{E}^*$
+* thereby, we can craft a synthetic variable -- the spatial filter
+
+\begin{align}
+\nonumber \bm{y} &=  \bm{X\beta} + \bm{E}\bm{\gamma} + \vphantom{\gamma}\bm{\epsilon}\\
+\nonumber &\approx  \bm{X\beta} + \underbrace{\bm{E}^*\bm{\gamma}}_{filter} + \underbrace{\vphantom{\gamma}\bm{\epsilon}}_{noise}
+\end{align}
+
+* different criteria can be used to select eigenvectors, e.g.:
+  * model fit
+  * significance
+  * spatial autocorrelation
+
+
+## Pros and Cons of ESF
+\begin{minipage}[t]{.495\textwidth}
+\begin{center}
+\underline{Pros}
+\end{center}
+\begin{itemize}
+\item[+] ease of model estimation
+\item[+] straightforward interpretation of parameters
+\item[+] flexibility
+\item[] {\footnotesize (no need to specify the spatial pattern in each variable)}
+\item[+] generalizability
+\item[] \footnotesize {(also applicable to GLMs -- with some modifications)}
+\end{itemize}
+\end{minipage}
+\begin{minipage}[t]{.495\textwidth}
+\begin{center}
+\underline{Cons}
+\end{center}
+\begin{itemize}
+\item[-] ``removes'' indirect spillovers
+\item[-] computationally demanding for large N
+\item[-] over- or undercorrection of spatial autocorrelation possible
+\end{itemize}
+\end{minipage}
+
+
+## \ 
+
+\centering
+(Preliminary)
+
+\LARGE\bf Monte Carlo Evidence
+
+
+## Reduction in Residual SA
+
+```{r echo=F, include=F}
+rm(list=ls())
+library(RColorBrewer)
+
+load("../Results.RData")
+
+sar <- matrix(NA,nrow=nrow(input),ncol=ncol(sim_out[[1]]$sar))
+colnames(sar) <- names(sim_out[[1]]$sar)
+for(i in 1:nrow(input)){
+  sar[i,] <- as.matrix(sim_out[[i]]$sar)
+}
+```
+
+```{r fig.width=5.5, fig.height=3.5}
+brewcol <- brewer.pal(n=4,name="RdGy") # "PuOr" - "RdGy" - "RdBu"
+layout(matrix(c(1,2,3),ncol=3,byrow=F))
+par(oma=c(3,3.5,2,3.5),mar=c(.3,.3,.3,.3))
+for(w in unique(input$W_id)){
+  sel <- input$W_id==w & input$sd.e==1
+  plot(0,xlim=c(0,max(input$p)),ylim=c(-1,30),type="n",axes=F,ann=F)
+  # initial MI
+  lines(x=unique(input$p),y=c(median(sar[sel&input$p==0,"moran_init"])
+                              ,median(sar[sel&input$p==.25,"moran_init"])
+                              ,median(sar[sel&input$p==.5,"moran_init"])
+                              ,median(sar[sel&input$p==.75,"moran_init"]))
+        ,type="b",pch=21,col=brewcol[1],bg=brewcol[1])
+  # Filtered (p)
+  lines(x=unique(input$p),y=c(median(sar[sel&input$p==0,"moran_filtered_p"])
+                              ,median(sar[sel&input$p==.25,"moran_filtered_p"])
+                              ,median(sar[sel&input$p==.5,"moran_filtered_p"])
+                              ,median(sar[sel&input$p==.75,"moran_filtered_p"]))
+        ,lty=4,type="b",pch=22,col=brewcol[2],bg=brewcol[2])
+  # Filtered (MC)
+  lines(x=unique(input$p),y=c(median(sar[sel&input$p==0,"moran_filtered_MI"])
+                              ,median(sar[sel&input$p==.25,"moran_filtered_MI"])
+                              ,median(sar[sel&input$p==.5,"moran_filtered_MI"])
+                              ,median(sar[sel&input$p==.75,"moran_filtered_MI"]))
+        ,lty=3,type="b",pch=23,col=brewcol[3],bg=brewcol[3])
+  # Filtered (R2)
+  lines(x=unique(input$p),y=c(median(sar[sel&input$p==0,"moran_filtered_R2"])
+                              ,median(sar[sel&input$p==.25,"moran_filtered_R2"])
+                              ,median(sar[sel&input$p==.5,"moran_filtered_R2"])
+                              ,median(sar[sel&input$p==.75,"moran_filtered_R2"]))
+        ,lty=2,type="b",pch=24,col=brewcol[4],bg=brewcol[4])
+  if(w==min(input$W_id)){
+    axis(2,at=c(0,5,10,15,20,25,30,35),las=1,mgp=c(3,.7,0))
+    legend("topleft",inset=0
+           ,legend=c(expression("OLS"[" "]),expression("ESF"[rho]),expression("ESF"[MC]),expression("ESF"[R^2]))
+           ,col=brewcol
+           ,pch=21:24
+           ,text.width=strwidth(expression("ESF"[MC]))*.9
+           ,pt.bg=brewcol
+           ,cex=.7
+           ,y.intersp=1.1)
+  }
+  
+  if(w==max(input$W_id)) axis(4,at=c(0,5,10,15,20,25,30,35),las=1,mgp=c(3,.7,0))
+  if(w==1) mtext(expression(bold(W)["50"]),side=3,line=.5)
+  if(w==2) mtext(expression(bold(W)["200"]),side=3,line=.5)
+  if(w==3) mtext(expression(bold(W)["435"]),side=3,line=.5)
+  box("plot")
+}
+mtext(expression(italic(rho)),side=1,line=2,outer=T)
+mtext("Standardized Moran Coefficient",side=2,line=2,outer=T)
+```
+

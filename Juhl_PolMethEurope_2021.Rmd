@@ -16,7 +16,6 @@ knitr::opts_chunk$set(echo = FALSE)
 
 ## Motivation
 
-
 * spatial autocorrelation can lead to inefficient or even biased and inconsistent parameter estimates in regression models
 * social scientists primarily address this issue in one of two ways:
   1. ignore it altogether and assume \textit{iid} observations
@@ -44,23 +43,23 @@ knitr::opts_chunk$set(echo = FALSE)
 
 \begin{minipage}[t]{.3\textwidth}
 \centering
-\underline{Spatial Error Model}
+\underline{Spatial Error DGP}
 \footnotesize
 \[
 \bm{y} = \bm{X\beta} + \underbrace{(\bm{I}-\rho\bm{W})^{-1}\bm{\epsilon}}_{\bm{e}_{SEM}}
 \]
 \end{minipage}
-\begin{minipage}[t]{.3\textwidth}
+\begin{minipage}[t]{.28\textwidth}
 \centering
-\underline{Spatial-X Model}
+\underline{Spatial-X DGP}
 \footnotesize
 \[
 \bm{y} = \bm{X\beta} + \underbrace{\rho\bm{WX}+\bm{\epsilon}}_{\bm{e}_{SLX}}
 \]
 \end{minipage}
-\begin{minipage}[t]{.38\textwidth}
+\begin{minipage}[t]{.4\textwidth}
 \centering
-\underline{Spatial Lag Model}
+\underline{Spatial Lag DGP}
 \footnotesize
 \begin{align}
 \nonumber\bm{y} & = \bm{X\beta} + \underbrace{\rho\bm{Wy}+\bm{\epsilon}}_{\bm{e}_{SAR}}\\
@@ -88,11 +87,11 @@ knitr::opts_chunk$set(echo = FALSE)
 \end{array}
 \]
 \end{minipage}
-\begin{minipage}[t]{.3\textwidth}
+\begin{minipage}[t]{.28\textwidth}
 \footnotesize
 \
 \end{minipage}
-\begin{minipage}[t]{.38\textwidth}
+\begin{minipage}[t]{.4\textwidth}
 \footnotesize
 \[\begin{array}{rl}
 \bm{y} = & \bm{X\beta}\\
@@ -156,97 +155,158 @@ ESF partitions the response variable into i) a systematic trend, ii) a stochasti
 \end{center}
 
 
-## Analytical Description of ESF I
+## Spatial Eigenfunction Analysis
 
-ESF technique utilizes the spectral decomposition of a centered and symmetrized connectivity matrix: $\bm{V}=\frac{1}{2}(\bm{W}+\bm{W}')$:
+ESF is based on the spectral decomposition of a centered (and symmetric/ symmetrized) connectivity matrix: $\bm{W}$:
 \[
-\bm{MVM} = \bm{E\Lambda E}^{-1} = \bm{E\Lambda E}'
+\bm{MWM} = \bm{E\Lambda E}^{-1} = \bm{E\Lambda E}'
 \]
 
-* demeaning projector $\bm{M}=(\bm{I}-\bm{11}'/n)$ ensures that all eigenvectors are orthogonal und uncorrelated
-* asymptotically, the eigenfunctions obtained from $\bm{MVM}$ converge to those of matrix $\bm{V}$
+* demeaning projector $\bm{M}=(\bm{I}-\bm{11}'/n)$ -- also ensures that all eigenvectors are orthogonal and uncorrelated
 * $\bm{E}$ are all $n$ eigenvectors
 * $\bm{\Lambda}$ is a diagonal matrix of the corresponding eigenvalues $\bm{\lambda}$
 
-\begin{align}
-\nonumber & \bm{y} = \bm{X\beta} + \underbrace{\rho\bm{Wy}+\bm{\epsilon}}_{\bm{e}_{SAR}}\\
-\nonumber\Rightarrow \hspace{.2cm} & \bm{y} = \bm{X\beta} + \underbrace{\rho\bm{E\Lambda E}'\bm{y}+\bm{\epsilon}}_{\bm{e}_{SAR}}
-\end{align}
 
+\textcolor{white}{Direct relationship to the numerator of the global Moran coefficient:}
 
-## Analytical Description of ESF II
 \[
-\bm{y} = \bm{X\beta} + \rho\bm{E\Lambda}\underbrace{\bm{E}'\bm{y}}_{\bm{g}}+\bm{\epsilon}
+\textcolor{white}{MC(\bm{x}) = \frac{n}{\bm{1}'\bm{W1}} \frac{\bm{x}'\bm{MWM}x}{\bm{x}'\bm{Mx}}}
+\]
+
+## Spatial Eigenfunction Analysis
+
+ESF is based on the spectral decomposition of a centered (and symmetric/ symmetrized) connectivity matrix: $\bm{W}$:
+\[
+\bm{\textcolor{red}{MWM}} = \bm{E\Lambda E}^{-1} = \bm{E\Lambda E}'
+\]
+
+* demeaning projector $\bm{M}=(\bm{I}-\bm{11}'/n)$ -- also ensures that all eigenvectors are orthogonal and uncorrelated
+* $\bm{E}$ are all $n$ eigenvectors
+* $\bm{\Lambda}$ is a diagonal matrix of the corresponding eigenvalues $\bm{\lambda}$
+
+
+Direct relationship to the numerator of the global Moran coefficient:
+
+\[
+MC(\bm{x}) = \frac{n}{\bm{1}'\bm{W1}} \frac{\bm{x}'\bm{\textcolor{red}{MWM}x}}{\bm{x}'\bm{Mx}}
 \]
 
 
-* $\bm{g}$ is the OLS estimator of $\bm{y}$ regressed on $\bm{E}$
+## Eigenvectors as Synthetic Map Patterns
 
-  $(\bm{E'E})^{-1}\bm{Ey} \Rightarrow \bm{Ey}$ since $\bm{E'E}=\bm{I}$
+* eigenvectors $\bm{E}$ depict distinct -- and uncorrelated -- synthetic map patterns
+* corresponding eigenvalues indicate the level of SA
 
-\pause
+```{r echo=F, include=F}
+library(spfilteR)
+data("fakedata")
+
+# eigenfunction decomposition
+EVs <- getEVs(W=W,covars=NULL)
+E <- EVs$vectors
+
+# preliminaries for plot
+library(RColorBrewer)
+library(lattice)
+col <- colorRampPalette(brewer.pal(n=9, "BuPu"))(400)
+coord.x <- coord.y <- seq_len(sqrt(nrow(W)))
+coord <- expand.grid(x=coord.x,y=coord.y)
+```
+
 \vspace{-.3cm}
 
-\[
-\bm{y} = \bm{X\beta} + \rho\bm{E\Lambda g}+\bm{\epsilon}
-\]
-
-* $\rho\bm{E\Lambda}$: $\rho\bm{\Lambda}$ essentially rescales $\bm{E}$
-
-  $\Rightarrow \bm{\gamma}=\rho\bm{\Lambda g}$
-
+\begin{minipage}[t]{.32\textwidth}
+\centering
+\tiny
+Eigenvector 1\\
+(MC = `r round(EVs$moran[1],3)`)
+```{r out.width="80%",out.height="80%"}
+lattice::levelplot(E[,1]~coord[,1]*coord[,2],col.regions=col,colorkey=F
+                   ,contour=F,xlab=NULL,ylab=NULL,scales=list(draw=F))
+```
+\end{minipage}
 \pause
-\vspace{-.5cm}
+\begin{minipage}[t]{.32\textwidth}
+\centering
+\tiny
+Eigenvector 10\\
+(MC = `r round(EVs$moran[10],3)`)
+```{r out.width="80%",out.height="80%"}
+lattice::levelplot(E[,10]~coord[,1]*coord[,2],col.regions=col,colorkey=F
+                   ,contour=F,xlab=NULL,ylab=NULL,scales=list(draw=F))
+```
+\end{minipage}
+\pause
+\begin{minipage}[t]{.32\textwidth}
+\centering
+\tiny
+Eigenvector 20\\
+(MC = `r round(EVs$moran[20],3)`)
+```{r out.width="80%",out.height="80%"}
+lattice::levelplot(E[,20]~coord[,1]*coord[,2],col.regions=col,colorkey=F
+                   ,contour=F,xlab=NULL,ylab=NULL,scales=list(draw=F))
+```
+\end{minipage}
 
-\begin{align}
-\nonumber \bm{y} &= \bm{X\beta} + \rho\bm{E\Lambda E}'\bm{y}+\bm{\epsilon}\\
-\nonumber &= \bm{X\beta} + \bm{E}\bm{\gamma} + \vphantom{\gamma}\bm{\epsilon}
-\end{align}
-
-However, we cannot include all $n$ eigenvectors as regressors!
+\begin{minipage}[t]{.32\textwidth}
+\centering
+\tiny
+Eigenvector 44\\
+(MC = `r round(EVs$moran[44],3)`)
+```{r out.width="80%",out.height="80%"}
+lattice::levelplot(E[,44]~coord[,1]*coord[,2],col.regions=col,colorkey=F
+                   ,contour=F,xlab=NULL,ylab=NULL,scales=list(draw=F))
+```
+\end{minipage}
+\begin{minipage}[t]{.32\textwidth}
+\centering
+\tiny
+Eigenvector 80\\
+(MC = `r round(EVs$moran[80],3)`)
+```{r out.width="80%",out.height="80%"}
+lattice::levelplot(E[,80]~coord[,1]*coord[,2],col.regions=col,colorkey=F
+                   ,contour=F,xlab=NULL,ylab=NULL,scales=list(draw=F))
+```
+\end{minipage}
+\pause
+\begin{minipage}[t]{.32\textwidth}
+\centering
+\tiny
+MCs of all\\
+Eigenvectors
+```{r out.width="80%",out.height="80%"}
+par(oma=c(4,4,0,0),mgp = c(3, 2, 0))
+plot(0,ylim=c(min(EVs$moran),max(EVs$moran)),xlim=c(1,length(EVs$moran))
+     ,axes=F,ann=F,type="n",las=1)
+  # EVs
+  points(y=EVs$moran,x=1:length(EVs$moran),pch=16,cex=1)
+  abline(h=0,lty=2,cex=.5)
+  # axes & labels
+  axis(1,cex.axis=3)
+  axis(2,cex.axis=3)
+  mtext("Eigenvectors",side=1,line=.5,outer=T,cex=5)
+  mtext("MC",side=2,line=.5,outer=T,cex=5)
+```
+\end{minipage}
 
 
 ## Constructing the Spatial Filter
 
-* the set of $\bm{E}$ depict \underline{all} possible patterns of autocorrelation permitted by the connectivity matrix $\bm{W}$
-* stepwise regression techniques help to select the most relevant patterns $\bm{E}^*$
-* thereby, we can craft a synthetic variable -- the spatial filter
+* $\bm{E}$ depict \underline{all} possible spatial patterns permitted by $\bm{W}$
+* more complex patterns can be obtained by a linear combination of eigenvectors
+* supervised or unsupervised stepwise regression techniques used to select the most relevant patterns $\bm{E}^*$
+
+\vspace{-.3cm}
 
 \begin{align}
-\nonumber \bm{y} &=  \bm{X\beta} + \bm{E}\bm{\gamma} + \vphantom{\gamma}\bm{\epsilon}\\
-\nonumber &\approx  \bm{X\beta} + \underbrace{\bm{E}^*\bm{\gamma}}_{filter} + \underbrace{\vphantom{\gamma}\bm{\epsilon}}_{noise}
+\nonumber \bm{y} &= \bm{X\beta} + \overbrace{\bm{E}\bm{\gamma} + \vphantom{\gamma}\bm{\epsilon}}^{\bm{e}_{OLS}}\\
+\nonumber &\approx \bm{X\beta} + \underbrace{\bm{E}^*\bm{\gamma}}_{filter} + \underbrace{\vphantom{\gamma}\bm{\epsilon}}_{noise}
 \end{align}
 
 * different criteria can be used to select eigenvectors, e.g.:
-  * model fit
-  * significance
-  * spatial autocorrelation
-
-
-## Pros and Cons of ESF
-\begin{minipage}[t]{.495\textwidth}
-\begin{center}
-\underline{Pros}
-\end{center}
-\begin{itemize}
-\item[+] ease of model estimation
-\item[+] straightforward interpretation of parameters
-\item[+] flexibility
-\item[] {\footnotesize (no need to specify the spatial pattern in each variable)}
-\item[+] generalizability
-\item[] \footnotesize {(also applicable to GLMs -- with some modifications)}
-\end{itemize}
-\end{minipage}
-\begin{minipage}[t]{.495\textwidth}
-\begin{center}
-\underline{Cons}
-\end{center}
-\begin{itemize}
-\item[-] ``removes'' indirect spillovers
-\item[-] computationally demanding for large N
-\item[-] over- or undercorrection of spatial autocorrelation possible
-\end{itemize}
-\end{minipage}
+  * maximization of model fit (e.g., AIC, BIC, $R^2$)
+  * significance level of eigenvectors
+  * minimization of residual SA
 
 
 ## \ 
@@ -327,3 +387,95 @@ mtext(expression(italic(rho)),side=1,line=2,outer=T)
 mtext("Standardized Moran Coefficient",side=2,line=2,outer=T)
 ```
 
+
+## Improved Model Fit
+
+```{r echo=F, include=F}
+rm(list=ls())
+load("../Res.RData")
+
+sar <- matrix(NA,nrow=nrow(input),ncol=ncol(sim_out[[1]]$sar))
+colnames(sar) <- names(sim_out[[1]]$sar)
+for(i in 1:nrow(input)){
+  sar[i,] <- as.matrix(sim_out[[i]]$sar)
+}
+```
+
+```{r fig.width=5.5, fig.height=3.5}
+sel <- input$sd.e==1 & input$W_id==3
+layout(matrix(c(1,2,3,4),ncol=2,byrow=T))
+par(oma=c(0,3,0,0),mar=c(1.5,1,1,2))
+for(p in unique(input$p)){
+  plot(0,xlim=c(1,4),ylim=c(.2,1),type="n",axes=F,ann=F)
+  text(x=2.5,y=.9,labels=bquote(rho~"="~.(eval(p))),cex=1)
+  for(i in 1:nsim){
+    lines(x=c(1:4),y=c(sar[sel&input$p==p,"fit_init"][i]
+                       ,sar[sel&input$p==p,"fit_filtered_p"][i]
+                       ,sar[sel&input$p==p,"fit_filtered_MI"][i]
+                       ,sar[sel&input$p==p,"fit_filtered_R2"][i])
+          ,lwd=.02,col=rgb(0,0,0,alpha=.03))
+  }
+  m <- sort(sar[sel&input$p==p,"fit_init"],decreasing=F)[nsim*.5]
+  lines(x=c(1:4),y=c(sar[sel&input$p==p,"fit_init"][sar[sel&input$p==p,"fit_init"]==m]
+                     ,sar[sel&input$p==p,"fit_filtered_p"][sar[sel&input$p==p,"fit_init"]==m]
+                     ,sar[sel&input$p==p,"fit_filtered_MI"][sar[sel&input$p==p,"fit_init"]==m]
+                     ,sar[sel&input$p==p,"fit_filtered_R2"][sar[sel&input$p==p,"fit_init"]==m])
+        ,lwd=2,col="navyblue") # or white?
+  axis(1,at=c(1,2,3,4),labels=c("OLS",expression("ESF"[rho]),expression("ESF"[MC]),expression("ESF"[R^2]))
+       ,col=NA,line=-1,cex.axis=.9) # ,col.ticks=1
+  abline(v=c(1,2,3,4),col=rgb(0,0,0,alpha=.3),lwd=1)
+  axis(2,at=c(.2,.4,.6,.8,1),las=1,cex.axis=.9,mgp=c(3,.7,0))
+  mtext(expression("Adjusted R"^"2"),side=2,line=1.5,outer=T)
+}
+```
+
+
+## Conclusion
+
+* ESF offers numerous advantages for political scientists
+* however, applicability depends on RQ (as always!)
+* things to consider:
+
+\begin{minipage}[t]{.495\textwidth}
+\begin{center}
+\underline{Pros}
+\end{center}
+\begin{itemize}
+\item[+] ease of model estimation
+\item[+] straightforward interpretation of parameters
+\item[+] flexibility
+\item[] {\footnotesize (no need to specify the spatial pattern in each variable)}
+\item[+] generalizability
+\item[] \footnotesize {(also applicable to GLMs -- with some modifications)}
+\end{itemize}
+\end{minipage}
+\begin{minipage}[t]{.495\textwidth}
+\begin{center}
+\underline{Cons}
+\end{center}
+\begin{itemize}
+\item[-] ``removes'' indirect spillovers
+\item[-] computationally demanding for large N
+\item[-] over- or undercorrection of SA possible
+\end{itemize}
+\end{minipage}
+
+
+## Additional Resources
+
+* \texttt{spfilteR} package:
+\begin{itemize}
+\item[] \underline{CRAN:} \url{https://CRAN.R-project.org/package=spfilteR}
+\item[] \underline{GitHub:} \url{https://github.com/sjuhl/spfilteR}
+\end{itemize}
+
+* further projects \& working papers
+  1. introductory paper on the \texttt{spfilteR} package (under review)
+  2. project on Moran eigenvector maps and spatial eigenfunction analysis
+
+\vspace{1cm}
+
+\centering
+**Feedback \& suggestions are highly appreciated!**\
+\texttt{sebastian.juhl@gess.uni-mannheim.de}\
+\url{www.sebastianjuhl.com}

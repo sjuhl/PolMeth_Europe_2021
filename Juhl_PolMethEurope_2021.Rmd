@@ -16,8 +16,8 @@ knitr::opts_chunk$set(echo = FALSE)
 
 ## Motivation
 
-* spatial autocorrelation can lead to inefficient or even biased and inconsistent parameter estimates in regression models
-* social scientists primarily address this issue in one of two ways:
+* spatial misspecification can lead to inefficient or even biased and inconsistent parameter estimates in regression models
+* social scientists primarily deal with a spatial misspecification problem in one of two ways:
   1. ignore it altogether and assume \textit{iid} observations
   2. apply (parametric) spatial regression models
 
@@ -198,6 +198,7 @@ MC(\bm{x}) = \frac{n}{\bm{1}'\bm{W1}} \frac{\bm{x}'\bm{\textcolor{red}{MWM}x}}{\
 * corresponding eigenvalues indicate the level of SA
 
 ```{r echo=F, include=F}
+rm(list=ls())
 library(spfilteR)
 data("fakedata")
 
@@ -214,6 +215,7 @@ coord <- expand.grid(x=coord.x,y=coord.y)
 ```
 
 \vspace{-.3cm}
+\pause
 
 \begin{minipage}[t]{.32\textwidth}
 \centering
@@ -290,13 +292,95 @@ plot(0,ylim=c(min(EVs$moran),max(EVs$moran)),xlim=c(1,length(EVs$moran))
 \end{minipage}
 
 
-## Constructing the Spatial Filter
+## Real-World Map Patterns
 
 * $\bm{E}$ depict \underline{all} possible spatial patterns permitted by $\bm{W}$
 * more complex patterns can be obtained by a linear combination of eigenvectors
-* supervised or unsupervised stepwise regression techniques used to select the most relevant patterns $\bm{E}^*$
 
-\vspace{-.3cm}
+```{r echo=F, include=F}
+rm(list=ls())
+library(spdep)
+
+# define color palette
+col <- brewer.pal(n=9, "Blues")
+
+# get German NUTS 3 regions shapefile & data
+load("../SEA/Data/eurostat2017.RData")
+ger3 <- st_read(dsn="../SEA/Shapefile/Germany")
+
+# specify spatial matrix
+nb <- poly2nb(ger3$geometry, queen=TRUE, row.names=ger3$NUTS_ID)
+sty <- "W"
+W <- nb2mat(nb,style=sty)
+
+# ESF
+var <- data$medianage
+MCobs <- MI.vec(x=var,W=W)
+filter <- lmFilter(y=var,W=W,objfn="MI")
+MCfil <- filter$moran
+```
+
+\begin{minipage}[t]{.32\textwidth}
+\centering
+\tiny
+Median Age\\
+```{r out.width="80%",out.height="80%"}
+# colcode
+seq <- quantile(var,probs=c(0,1/9,2/9,3/9,4/9,5/9,6/9,7/9,8/9))
+colcode <- sapply(var,function(x) sum(x >=seq))
+# map
+par(oma=c(0,0,0,0),mar=c(0,0,0,0))
+plot(st_geometry(ger3),col=col[colcode])
+```
+
+MC = `r round(MCobs$I,3)`\
+(\textit{p} = `r round(MCobs$pI,3)`)
+\end{minipage}
+\pause
+\begin{minipage}[t]{.32\textwidth}
+\centering
+\tiny
+Spatial Filter\\
+```{r out.width="80%",out.height="80%"}
+# colcode
+seq <- quantile(filter$other$sf,probs=c(0,1/9,2/9,3/9,4/9,5/9,6/9,7/9,8/9))
+colcode <- sapply(filter$other$sf,function(x) sum(x >=seq))
+# map
+par(oma=c(0,0,0,0),mar=c(0,0,0,0))
+plot(st_geometry(ger3),col=col[colcode])
+```
+
+MC = `r round(MCfil["Initial","Observed"],3)`\
+(\textit{p} = `r round(MCfil["Initial","p-value"],3)`)
+\end{minipage}
+\begin{minipage}[t]{.32\textwidth}
+\centering
+\tiny
+Filtered Residuals\\
+```{r out.width="80%",out.height="80%"}
+# colcode
+seq <- quantile(filter$residuals[,"Filtered"],probs=c(0,1/9,2/9,3/9,4/9,5/9,6/9,7/9,8/9))
+colcode <- sapply(filter$residuals[,"Filtered"],function(x) sum(x >=seq))
+# map
+par(oma=c(0,0,0,0),mar=c(0,0,0,0))
+plot(st_geometry(ger3),col=col[colcode])
+```
+
+MC = `r round(MCfil["Filtered","Observed"],3)`\
+(\textit{p} = `r round(MCfil["Filtered","p-value"],3)`)
+\end{minipage}
+
+
+## Eigenvector Selection for the Spatial Filter
+
+However, it is impossible to include all $n$ eigenvectors as regressors
+
+1. Identification of a candidate set $\bm{E}^C \subset \bm{E}$ based on
+    - sign of SA
+    - strength of SA
+2. select relevant map patterns $\bm{E}^* \subset \bm{E}^C$ using supervised or unsupervised stepwise regression
+
+\vspace{-.35cm}
 
 \begin{align}
 \nonumber \bm{y} &= \bm{X\beta} + \overbrace{\bm{E}\bm{\gamma} + \vphantom{\gamma}\bm{\epsilon}}^{\bm{e}_{OLS}}\\
@@ -307,7 +391,6 @@ plot(0,ylim=c(min(EVs$moran),max(EVs$moran)),xlim=c(1,length(EVs$moran))
   * maximization of model fit (e.g., AIC, BIC, $R^2$)
   * significance level of eigenvectors
   * minimization of residual SA
-
 
 ## \ 
 

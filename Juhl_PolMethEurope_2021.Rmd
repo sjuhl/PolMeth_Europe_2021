@@ -17,17 +17,15 @@ knitr::opts_chunk$set(echo = FALSE)
 ## Motivation
 
 * spatial misspecification can lead to inefficient or even biased and inconsistent parameter estimates in regression models
-* social scientists primarily deal with a spatial misspecification problem in one of two ways:
-  1. ignore it altogether and assume \textit{iid} observations
-  2. apply (parametric) spatial regression models
+* social scientists predominantly (exclusively?) apply parametric spatial regression models to _control_ for spatial misspecification
 
-\vspace{.3cm}
-
-* semiparametric filtering techniques can offer an attractive alternative
+* semiparametric filtering techniques can offer an attractive alternative:
   * ease of estimation (standard OLS or ML estimators)
   * straightforward interpretation
-  * accounts for spatial autocorrelation at different scales/resolutions
+  * accounts for SA at different scales/resolutions
   * easily adaptable to GLMs
+
+* especially eigenvector-based spatial filtering (e.g., Griffith 1996 & 2003) is of practical utility
 
 
 ## Spatial Misspecification in Linear Models
@@ -138,9 +136,8 @@ knitr::opts_chunk$set(echo = FALSE)
 
 \underline{Intuition:}
 
-ESF partitions the response variable into i) a systematic trend, ii) a stochastic spatial signal, and iii) \textit{iid} disturbances
-
-\vspace{.7cm}
+* include a proxy variable for spatial effects in the regression's systematic part
+* ESF partitions the response variable into i) a systematic trend, ii) a stochastic spatial signal, and iii) \textit{iid} disturbances
 
 \underline{Example: SAR DGP}
 
@@ -209,7 +206,7 @@ E <- EVs$vectors
 # preliminaries for plot
 library(RColorBrewer)
 library(lattice)
-col <- colorRampPalette(brewer.pal(n=9, "BuPu"))(400)
+col <- colorRampPalette(colors=c("white", "navyblue"))(nrow(W))
 coord.x <- coord.y <- seq_len(sqrt(nrow(W)))
 coord <- expand.grid(x=coord.x,y=coord.y)
 ```
@@ -301,9 +298,6 @@ plot(0,ylim=c(min(EVs$moran),max(EVs$moran)),xlim=c(1,length(EVs$moran))
 rm(list=ls())
 library(spdep)
 
-# define color palette
-col <- brewer.pal(n=9, "Blues")
-
 # get German NUTS 3 regions shapefile & data
 load("../SEA/Data/eurostat2017.RData")
 ger3 <- st_read(dsn="../SEA/Shapefile/Germany")
@@ -314,23 +308,23 @@ sty <- "W"
 W <- nb2mat(nb,style=sty)
 
 # ESF
-var <- data$medianage
+var <- data$popdens1km2
 MCobs <- MI.vec(x=var,W=W)
-filter <- lmFilter(y=var,W=W,objfn="MI")
+filter <- lmFilter(y=var,W=W,objfn="MI", alpha=.01)
 MCfil <- filter$moran
+
+# define color palette
+cols <- colorRampPalette(colors=c("white", "navyblue"))(length(var))
 ```
 
 \begin{minipage}[t]{.32\textwidth}
 \centering
 \tiny
-Median Age\\
+Population Density\\
 ```{r out.width="80%",out.height="80%"}
-# colcode
-seq <- quantile(var,probs=c(0,1/9,2/9,3/9,4/9,5/9,6/9,7/9,8/9))
-colcode <- sapply(var,function(x) sum(x >=seq))
 # map
 par(oma=c(0,0,0,0),mar=c(0,0,0,0))
-plot(st_geometry(ger3),col=col[colcode])
+plot(st_geometry(ger3),col=cols[rank(var)])
 ```
 
 MC = `r round(MCobs$I,3)`\
@@ -342,12 +336,9 @@ MC = `r round(MCobs$I,3)`\
 \tiny
 Spatial Filter\\
 ```{r out.width="80%",out.height="80%"}
-# colcode
-seq <- quantile(filter$other$sf,probs=c(0,1/9,2/9,3/9,4/9,5/9,6/9,7/9,8/9))
-colcode <- sapply(filter$other$sf,function(x) sum(x >=seq))
 # map
 par(oma=c(0,0,0,0),mar=c(0,0,0,0))
-plot(st_geometry(ger3),col=col[colcode])
+plot(st_geometry(ger3),col=cols[rank(filter$other$sf)])
 ```
 
 MC = `r round(MCfil["Initial","Observed"],3)`\
@@ -358,12 +349,9 @@ MC = `r round(MCfil["Initial","Observed"],3)`\
 \tiny
 Filtered Residuals\\
 ```{r out.width="80%",out.height="80%"}
-# colcode
-seq <- quantile(filter$residuals[,"Filtered"],probs=c(0,1/9,2/9,3/9,4/9,5/9,6/9,7/9,8/9))
-colcode <- sapply(filter$residuals[,"Filtered"],function(x) sum(x >=seq))
 # map
 par(oma=c(0,0,0,0),mar=c(0,0,0,0))
-plot(st_geometry(ger3),col=col[colcode])
+plot(st_geometry(ger3),col=cols[rank(filter$residuals[,"Filtered"])])
 ```
 
 MC = `r round(MCfil["Filtered","Observed"],3)`\
@@ -375,22 +363,26 @@ MC = `r round(MCfil["Filtered","Observed"],3)`\
 
 However, it is impossible to include all $n$ eigenvectors as regressors
 
-1. Identification of a candidate set $\bm{E}^C \subset \bm{E}$ based on
+1. identification of a candidate set $\bm{E}^C \subset \bm{E}$ based on
     - sign of SA
     - strength of SA
 2. select relevant map patterns $\bm{E}^* \subset \bm{E}^C$ using supervised or unsupervised stepwise regression
 
-\vspace{-.35cm}
+\vspace{-.7cm}
 
 \begin{align}
 \nonumber \bm{y} &= \bm{X\beta} + \overbrace{\bm{E}\bm{\gamma} + \vphantom{\gamma}\bm{\epsilon}}^{\bm{e}_{OLS}}\\
 \nonumber &\approx \bm{X\beta} + \underbrace{\bm{E}^*\bm{\gamma}}_{filter} + \underbrace{\vphantom{\gamma}\bm{\epsilon}}_{noise}
 \end{align}
 
-* different criteria can be used to select eigenvectors, e.g.:
-  * maximization of model fit (e.g., AIC, BIC, $R^2$)
-  * significance level of eigenvectors
+\vspace{-.4cm}
+
+* different selection criteria can be used:
+  * maximization of model fit (e.g., AIC, BIC, $R^2$, ...)
+  * significance level of eigenvectors or residual SA
   * minimization of residual SA
+  * LASSO
+  * ...
 
 ## \ 
 
@@ -516,7 +508,6 @@ for(p in unique(input$p)){
 ## Conclusion
 
 * ESF offers numerous advantages for political scientists
-* however, applicability depends on RQ (as always!)
 * things to consider:
 
 \begin{minipage}[t]{.495\textwidth}
@@ -537,12 +528,14 @@ for(p in unique(input$p)){
 \underline{Cons}
 \end{center}
 \begin{itemize}
-\item[-] ``removes'' indirect spillovers
+\item[-] ``space'' as misspecification problem
 \item[-] computationally demanding for large N
 \item[-] over- or undercorrection of SA possible
 \end{itemize}
 \end{minipage}
 
+* applicability depends on research context (as always)
+* ESF \underline{is not} a replacement for parametric spatial regression models!
 
 ## Additional Resources
 
@@ -560,5 +553,5 @@ for(p in unique(input$p)){
 
 \centering
 **Feedback \& suggestions are highly appreciated!**\
-\texttt{sebastian.juhl@gess.uni-mannheim.de}\
+\href{mailto:sebastian.juhl@gess.uni-mannheim.de}{\texttt{sebastian.juhl@gess.uni-mannheim.de}}\
 \url{www.sebastianjuhl.com}

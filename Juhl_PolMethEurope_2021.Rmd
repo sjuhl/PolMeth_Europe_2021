@@ -17,7 +17,7 @@ knitr::opts_chunk$set(echo = FALSE)
 ## Motivation
 
 * spatial misspecification can lead to inefficient or even biased and inconsistent parameter estimates in regression models
-* social scientists predominantly (exclusively?) apply parametric spatial regression models to _control_ for spatial misspecification
+* social scientists predominantly (exclusively?) apply parametric spatial regression models to _control_ for spatial confounding
 
 * semiparametric filtering techniques can offer an attractive alternative:
   * ease of estimation (standard OLS or ML estimators)
@@ -26,6 +26,7 @@ knitr::opts_chunk$set(echo = FALSE)
   * easily adaptable to GLMs
 
 * especially eigenvector-based spatial filtering (e.g., Griffith 1996 & 2003) is of practical utility
+
 
 
 ## Spatial Misspecification in Linear Models
@@ -65,14 +66,119 @@ knitr::opts_chunk$set(echo = FALSE)
 \end{align}
 \end{minipage}
 
-\pause
+
 <!-- \vspace{-.5cm} -->
 \footnotesize
 \[
-(\bm{I}-\rho\bm{W})^{-1} = (\bm{I} + \rho\bm{W}+\rho^2\bm{W}+...)
+\textcolor{white}{(\bm{I}-\rho\bm{W})^{-1} = (\bm{I} + \rho\bm{W}+\rho^2\bm{W}+...)}
 \]
 
 
+\vspace{-.7cm}
+
+\begin{minipage}[t]{.3\textwidth}
+\footnotesize
+\[\textcolor{white}{\begin{array}{rl}
+\bm{y} = & \bm{X\beta}\\
+&\left.\begin{array}{l} + \rho\bm{W}\bm{\epsilon}\\
++ \rho^2\bm{W}^2\bm{\epsilon}\\
++ ... + \bm{\epsilon}\end{array}\right\}\bm{e}_{SEM}
+\end{array}}
+\]
+\end{minipage}
+\begin{minipage}[t]{.28\textwidth}
+\footnotesize
+\
+\end{minipage}
+\begin{minipage}[t]{.4\textwidth}
+\footnotesize
+\[\textcolor{white}{\begin{array}{rl}
+\bm{y} = & \bm{X\beta}\\
+&\left.\begin{array}{l} + \rho\bm{W}(\bm{X\beta}+\bm{\epsilon})\\
++ \rho^2\bm{W}^2(\bm{X\beta}+\bm{\epsilon})\\
++ ... + \bm{\epsilon}\end{array}\right\}\bm{e}_{SAR}
+\end{array}}
+\]
+\end{minipage}
+
+<!-- \pause -->
+<!-- \vspace{.2cm} -->
+
+\begin{minipage}[t]{.325\textwidth}
+\centering
+\footnotesize
+\textcolor{white}{\underline{$\bm{e}_{SEM}$}}
+\vspace{-.3cm}
+\[
+\textcolor{white}{\underbrace{\sum_{r=1}^{\infty}\rho^r\bm{W}^r\bm{\epsilon}}_{\text{spatial part}} + \underbrace{\vphantom{\sum_{i}^{i}}\bm{\epsilon}}_{\text{noise}}}
+\]
+\end{minipage}
+\begin{minipage}[t]{.325\textwidth}
+\centering
+\footnotesize
+\textcolor{white}{\underline{$\bm{e}_{SLX}$}}
+\vspace{-.3cm}
+\[
+\textcolor{white}{\underbrace{\vphantom{\sum_{r=1}^{\infty}}\rho\bm{WX}}_{\text{spatial part}} +\underbrace{\vphantom{\sum_{r=1}^{\infty}}\bm{\epsilon}}_{\text{noise}}}
+\]
+\end{minipage}
+\begin{minipage}[t]{.325\textwidth}
+\centering
+\footnotesize
+\textcolor{white}{\underline{$\bm{e}_{SAR}$}}
+\vspace{-.3cm}
+\[
+\textcolor{white}{\underbrace{\sum_{r=1}^{\infty}\rho^r\bm{W}^r(\bm{X\beta} + \bm{\epsilon})}_{\text{spatial part}} + \underbrace{\vphantom{\sum_{i}^{i}}\bm{\epsilon}}_{\text{noise}}}
+\]
+\end{minipage}
+
+
+
+## Spatial Misspecification in Linear Models
+
+\vspace{-.4cm}
+
+\[
+\bm{y} = \bm{X\beta} + \bm{e}
+\]
+
+<!-- \pause -->
+\vspace{-.2cm}
+
+\begin{minipage}[t]{.3\textwidth}
+\centering
+\underline{Spatial Error DGP}
+\footnotesize
+\[
+\bm{y} = \bm{X\beta} + \underbrace{\textcolor{red}{(\bm{I}-\rho\bm{W})^{-1}}\bm{\epsilon}}_{\bm{e}_{SEM}}
+\]
+\end{minipage}
+\begin{minipage}[t]{.28\textwidth}
+\centering
+\underline{Spatial-X DGP}
+\footnotesize
+\[
+\bm{y} = \bm{X\beta} + \underbrace{\rho\bm{WX}+\bm{\epsilon}}_{\bm{e}_{SLX}}
+\]
+\end{minipage}
+\begin{minipage}[t]{.4\textwidth}
+\centering
+\underline{Spatial Lag DGP}
+\footnotesize
+\begin{align}
+\nonumber\bm{y} & = \bm{X\beta} + \underbrace{\rho\bm{Wy}+\bm{\epsilon}}_{\bm{e}_{SAR}}\\
+\nonumber\bm{y} & = \textcolor{red}{(\bm{I}-\rho\bm{W})^{-1}} (\bm{X\beta} + \bm{\epsilon})
+\end{align}
+\end{minipage}
+
+<!-- \pause -->
+<!-- \vspace{-.5cm} -->
+\footnotesize
+\[
+\textcolor{red}{(\bm{I}-\rho\bm{W})^{-1}} = (\bm{I} + \rho\bm{W}+\rho^2\bm{W}+...)
+\]
+
+\pause
 \vspace{-.7cm}
 
 \begin{minipage}[t]{.3\textwidth}
@@ -81,7 +187,7 @@ knitr::opts_chunk$set(echo = FALSE)
 \bm{y} = & \bm{X\beta}\\
 &\left.\begin{array}{l} + \rho\bm{W}\bm{\epsilon}\\
 + \rho^2\bm{W}^2\bm{\epsilon}\\
-+ ... + \bm{\epsilon}\end{array}\right\}\bm{\epsilon}_{SEM}
++ ... + \bm{\epsilon}\end{array}\right\}\bm{e}_{SEM}
 \end{array}
 \]
 \end{minipage}
@@ -95,7 +201,7 @@ knitr::opts_chunk$set(echo = FALSE)
 \bm{y} = & \bm{X\beta}\\
 &\left.\begin{array}{l} + \rho\bm{W}(\bm{X\beta}+\bm{\epsilon})\\
 + \rho^2\bm{W}^2(\bm{X\beta}+\bm{\epsilon})\\
-+ ... + \bm{\epsilon}\end{array}\right\}\bm{\epsilon}_{SAR}
++ ... + \bm{\epsilon}\end{array}\right\}\bm{e}_{SAR}
 \end{array}
 \]
 \end{minipage}
@@ -136,8 +242,8 @@ knitr::opts_chunk$set(echo = FALSE)
 
 \underline{Intuition:}
 
-* include a proxy variable for spatial effects in the regression's systematic part
-* ESF partitions the response variable into i) a systematic trend, ii) a stochastic spatial signal, and iii) \textit{iid} disturbances
+* include a proxy variable for omitted spatial effects in the regression's systematic part
+* ESF partitions the response variable into i) a systematic trend, ii) a stochastic spatial signal, and iii) _iid_ disturbances
 
 \underline{Example: SAR DGP}
 
@@ -145,23 +251,23 @@ knitr::opts_chunk$set(echo = FALSE)
 \begin{tikzpicture}[sibling distance=10em]
 \node{\begin{tabular}{c}$\bm{y}$\\{\tiny(outcome)}\end{tabular}}
 	child[->]{node{\begin{tabular}{c}$\bm{X\beta}$\\{\tiny(systematic trend)}\end{tabular}}}
-	child[->]{node{\begin{tabular}{c}$\sum_{r=1}^{\infty}\rho^r\bm{W}^r(\bm{X\beta} + \bm{\epsilon})+\epsilon$\\{\tiny(autocorrelated part)}\end{tabular}}
+	child[->]{node{\begin{tabular}{c}$\sum_{r=1}^{\infty}\rho^r\bm{W}^r(\bm{X\beta} + \bm{\epsilon})+\bm{\epsilon}$\\{\tiny(autocorrelated part)}\end{tabular}}
 		child[->]{node{\begin{tabular}{c}$\sum_{r=1}^{\infty}\rho^r\bm{W}^r(\bm{X\beta} + \bm{\epsilon})$\\{\tiny(stochastic spatial signal)}\end{tabular}}}
-		child[->]{node{\begin{tabular}{c}$\epsilon$\\{\tiny(\textit{iid} disturbances)}\end{tabular}}}};
+		child[->]{node{\begin{tabular}{c}$\bm{\epsilon}$\\{\tiny(\textit{iid} disturbances)}\end{tabular}}}};
 \end{tikzpicture}
 \end{center}
 
 
 ## Spatial Eigenfunction Analysis
 
-ESF is based on the spectral decomposition of a centered (and symmetric/ symmetrized) connectivity matrix: $\bm{W}$:
+ESF is based on the spectral decomposition of a centered (and symmetric/ symmetrized) connectivity matrix $\bm{W}$:
 \[
 \bm{MWM} = \bm{E\Lambda E}^{-1} = \bm{E\Lambda E}'
 \]
 
 * demeaning projector $\bm{M}=(\bm{I}-\bm{11}'/n)$ -- also ensures that all eigenvectors are orthogonal and uncorrelated
 * $\bm{E}$ are all $n$ eigenvectors
-* $\bm{\Lambda}$ is a diagonal matrix of the corresponding eigenvalues $\bm{\lambda}$
+* $\bm{\Lambda}$ is a diagonal matrix of the eigenvalues $\bm{\lambda}$
 
 
 \textcolor{white}{Direct relationship to the numerator of the global Moran coefficient:}
@@ -172,14 +278,14 @@ ESF is based on the spectral decomposition of a centered (and symmetric/ symmetr
 
 ## Spatial Eigenfunction Analysis
 
-ESF is based on the spectral decomposition of a centered (and symmetric/ symmetrized) connectivity matrix: $\bm{W}$:
+ESF is based on the spectral decomposition of a centered (and symmetric/ symmetrized) connectivity matrix $\bm{W}$:
 \[
 \bm{\textcolor{red}{MWM}} = \bm{E\Lambda E}^{-1} = \bm{E\Lambda E}'
 \]
 
 * demeaning projector $\bm{M}=(\bm{I}-\bm{11}'/n)$ -- also ensures that all eigenvectors are orthogonal and uncorrelated
 * $\bm{E}$ are all $n$ eigenvectors
-* $\bm{\Lambda}$ is a diagonal matrix of the corresponding eigenvalues $\bm{\lambda}$
+* $\bm{\Lambda}$ is a diagonal matrix of the eigenvalues $\bm{\lambda}$
 
 
 Direct relationship to the numerator of the global Moran coefficient:
@@ -192,6 +298,7 @@ MC(\bm{x}) = \frac{n}{\bm{1}'\bm{W1}} \frac{\bm{x}'\bm{\textcolor{red}{MWM}x}}{\
 ## Eigenvectors as Synthetic Map Patterns
 
 * eigenvectors $\bm{E}$ depict distinct -- and uncorrelated -- synthetic map patterns
+* $\bm{E}$ contains \underline{all} possible spatial patterns permitted by $\bm{W}$
 * corresponding eigenvalues indicate the level of SA
 
 ```{r echo=F, include=F}
@@ -274,7 +381,7 @@ lattice::levelplot(E[,80]~coord[,1]*coord[,2],col.regions=col,colorkey=F
 MCs of all\\
 Eigenvectors
 ```{r out.width="80%",out.height="80%"}
-par(oma=c(4,4,0,0),mgp = c(3, 2, 0))
+par(oma=c(4,4.2,0,0),mgp = c(3, 2, 0))
 plot(0,ylim=c(min(EVs$moran),max(EVs$moran)),xlim=c(1,length(EVs$moran))
      ,axes=F,ann=F,type="n",las=1)
   # EVs
@@ -291,8 +398,7 @@ plot(0,ylim=c(min(EVs$moran),max(EVs$moran)),xlim=c(1,length(EVs$moran))
 
 ## Real-World Map Patterns
 
-* $\bm{E}$ depict \underline{all} possible spatial patterns permitted by $\bm{W}$
-* more complex patterns can be obtained by a linear combination of eigenvectors
+More realistic (and complex) patterns can be obtained by a linear combination of eigenvectors:
 
 ```{r echo=F, include=F}
 rm(list=ls())
@@ -328,7 +434,7 @@ plot(st_geometry(ger3),col=cols[rank(var)])
 ```
 
 MC = `r round(MCobs$I,3)`\
-(\textit{p} = `r round(MCobs$pI,3)`)
+(\textit{p} = `r format(round(MCobs$pI,3),nsmall=3)`)
 \end{minipage}
 \pause
 \begin{minipage}[t]{.32\textwidth}
@@ -342,7 +448,7 @@ plot(st_geometry(ger3),col=cols[rank(filter$other$sf)])
 ```
 
 MC = `r round(MCfil["Initial","Observed"],3)`\
-(\textit{p} = `r round(MCfil["Initial","p-value"],3)`)
+(\textit{p} = `r format(round(MCfil["Initial","p-value"],3),nsmall=3)`)
 \end{minipage}
 \begin{minipage}[t]{.32\textwidth}
 \centering
@@ -355,7 +461,7 @@ plot(st_geometry(ger3),col=cols[rank(filter$residuals[,"Filtered"])])
 ```
 
 MC = `r round(MCfil["Filtered","Observed"],3)`\
-(\textit{p} = `r round(MCfil["Filtered","p-value"],3)`)
+(\textit{p} = `r format(round(MCfil["Filtered","p-value"],3),nsmall=3)`)
 \end{minipage}
 
 
@@ -520,7 +626,7 @@ for(p in unique(input$p)){
 \item[+] flexibility
 \item[] {\footnotesize (no need to specify the spatial pattern in each variable)}
 \item[+] generalizability
-\item[] \footnotesize {(also applicable to GLMs -- with some modifications)}
+\item[] \footnotesize {(also applicable to GLMs -- with slight modifications)}
 \end{itemize}
 \end{minipage}
 \begin{minipage}[t]{.495\textwidth}

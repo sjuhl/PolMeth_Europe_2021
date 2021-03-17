@@ -17,14 +17,17 @@ knitr::opts_chunk$set(echo = FALSE)
 ## Motivation
 
 * spatial misspecification can lead to inefficient or even biased and inconsistent parameter estimates in regression models
-* social scientists predominantly (exclusively?) apply parametric spatial regression models to _control_ for spatial confounding
 
-* alternative: semiparametric filtering techniques -- especially eigenvector-based spatial filtering (e.g., Griffith 1996 & 2003)
+* social scientists predominantly (exclusively?) apply parametric spatial regression models to _control_ for spatial confounding
+  * complex estimation & interpretation
+  * challenging for GLMs
+  * require numerous assumptions regarding the spatial process
+
+* alternative: semiparametric filtering techniques -- esp. eigenvector-based spatial filtering (e.g., Griffith 1996 & 2003)
   * ease of estimation (standard OLS or ML estimators)
   * straightforward interpretation
   * accounts for SA at different scales/resolutions
   * easily adaptable to GLMs
-
 
 
 ## Spatial Misspecification in Linear Models
